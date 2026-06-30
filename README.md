@@ -64,7 +64,7 @@ The recommendation system follows these steps:
 ```text
 Movie-Recommendation-System/
 │
-├── app.py
+├── app2.py
 ├── model.py
 ├── movie_recommendation.ipynb
 ├── movies_metadata.csv
