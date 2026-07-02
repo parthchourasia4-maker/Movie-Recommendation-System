@@ -121,10 +121,11 @@ def load_dataset():
 
 df = load_dataset()
 
-indices = pd.Series(
-    df.index,
-    index=df["title"]
-).drop_duplicates()
+indices = (
+    df.reset_index()
+      .drop_duplicates(subset="title")
+      .set_index("title")["index"]
+)
 
 tfidf = TfidfVectorizer(
     max_features=50000,
@@ -140,21 +141,6 @@ tfidf_matrix = tfidf.fit_transform(df["tag"])
 # -----------------------------------------------------
 
 def recommend(movie_name, n=10):
-    """
-    Recommend similar movies.
-
-    Parameters
-    ----------
-    movie_name : str
-        Movie selected by user
-
-    n : int
-        Number of recommendations
-
-    Returns
-    -------
-    list
-    """
 
     if movie_name not in indices:
         return []
@@ -163,19 +149,34 @@ def recommend(movie_name, n=10):
 
     similarity_scores = cosine_similarity(
         tfidf_matrix[movie_index],
-        tfidf_matrix,
+        tfidf_matrix
     ).flatten()
 
-    movie_indices = similarity_scores.argsort()[::-1][1 : n + 1]
+    similar_indices = similarity_scores.argsort()[::-1]
 
-    recommendations = (
-        df.iloc[movie_indices]["title"]
-        .tolist()
-    )
+    recommendations = []
+    seen = set()
+
+    for idx in similar_indices:
+
+        if idx == movie_index:
+            continue
+
+        if idx >= len(df):
+            continue
+
+        movie = df.iloc[idx]["title"]
+
+        if movie in seen:
+            continue
+
+        seen.add(movie)
+        recommendations.append(movie)
+
+        if len(recommendations) == n:
+            break
 
     return recommendations
-
-
 # -----------------------------------------------------
 # Available Movies
 # -----------------------------------------------------
